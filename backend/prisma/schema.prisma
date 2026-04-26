@@ -1,0 +1,94 @@
+// Defines database models and enums for the complaint platform.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CITIZEN
+  OFFICER
+  ADMIN
+}
+
+enum ComplaintCategory {
+  ELECTRICITY
+  WATER
+  ROADS
+  GARBAGE
+  STREET_LIGHTS
+  EDUCATION
+  PUBLIC_SAFETY
+  OTHER
+}
+
+enum ComplaintStatus {
+  PENDING
+  UNDER_REVIEW
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+}
+
+enum UrgencyLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model User {
+  id         String      @id @default(uuid())
+  name       String
+  email      String      @unique
+  password   String
+  refreshToken String?
+  role       UserRole    @default(CITIZEN)
+  phone      String?
+  complaints Complaint[]
+  createdAt  DateTime    @default(now())
+}
+
+model Complaint {
+  id                 String            @id @default(uuid())
+  title              String
+  description        String
+  category           ComplaintCategory
+  status             ComplaintStatus   @default(PENDING)
+  urgency            UrgencyLevel      @default(MEDIUM)
+  imageUrl           String?
+  latitude           Float?
+  longitude          Float?
+  address            String?
+  aiCategory         String?
+  aiUrgency          String?
+  aiConfidence       Float?
+  isDuplicate        Boolean           @default(false)
+  duplicateOf        String?
+  userId             String
+  user               User              @relation(fields: [userId], references: [id])
+  departmentId       String?
+  department         Department?       @relation(fields: [departmentId], references: [id])
+  statusHistory      StatusHistory[]
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+}
+
+model Department {
+  id         String      @id @default(uuid())
+  name       String
+  email      String?
+  complaints Complaint[]
+}
+
+model StatusHistory {
+  id          String          @id @default(uuid())
+  complaintId String
+  complaint   Complaint       @relation(fields: [complaintId], references: [id])
+  status      ComplaintStatus
+  note        String?
+  changedAt   DateTime        @default(now())
+}

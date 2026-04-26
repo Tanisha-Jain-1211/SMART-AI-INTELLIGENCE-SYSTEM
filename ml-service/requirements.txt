@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+transformers
+torch
+scikit-learn
+sentence-transformers
+python-dotenv
+numpy
+pandas
+mysql-connector-python
+sqlalchemy
+pydantic
+httpx
+joblib

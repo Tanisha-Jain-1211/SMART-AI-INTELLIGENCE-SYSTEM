@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-200 antialiased selection:bg-indigo-500/30 selection:text-indigo-200;
+    /* Deep space background gradient */
+    background-image: radial-gradient(circle at top right, #1e1b4b, #020617 40%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-slate-900/40 backdrop-blur-md border border-slate-700/50 shadow-xl rounded-xl;
+  }
+  
+  .glass-card {
+    @apply bg-slate-800/40 backdrop-blur-sm border border-slate-700/50 shadow-lg rounded-xl hover:bg-slate-800/60 transition-colors duration-300;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+  }
+
+  .neon-border {
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.3), inset 0 0 10px rgba(99, 102, 241, 0.1);
+  }
+}
