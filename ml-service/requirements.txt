@@ -7,8 +7,6 @@ sentence-transformers
 python-dotenv
 numpy
 pandas
-mysql-connector-python
-sqlalchemy
+joblib
 pydantic
 httpx
-joblib

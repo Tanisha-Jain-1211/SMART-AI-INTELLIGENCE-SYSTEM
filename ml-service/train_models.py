@@ -8,7 +8,11 @@ from sklearn.model_selection import train_test_split
 
 from utils.text_preprocessor import TextPreprocessor
 
-def main():
+def main() -> None:
+    """
+    Main function to load training data, train the TF-IDF Vectorizer and Logistic 
+    Regression classifier, print evaluation metrics, and save the final models.
+    """
     print("Loading training data...")
     data_path = os.path.join(os.path.dirname(__file__), "data", "training_data.json")
     

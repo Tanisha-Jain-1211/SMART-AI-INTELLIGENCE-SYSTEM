@@ -30,3 +30,6 @@ backend/prisma/migrations/
 Thumbs.db
 .idea/
 .vscode/
+
+# ML Models
+saved_models/
