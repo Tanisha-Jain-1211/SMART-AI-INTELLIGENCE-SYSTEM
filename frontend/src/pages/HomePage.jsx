@@ -35,7 +35,7 @@ export default function HomePage() {
 
       {/* Features Section */}
       <section className="grid md:grid-cols-3 gap-6 mt-10">
-        <div className="glass-card p-8 text-center flex flex-col items-center">
+        <Link to="/my-complaints" className="glass-card p-8 text-center flex flex-col items-center hover:bg-white/5 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
           <div className="rounded-full bg-indigo-500/20 p-4 mb-4">
             <MapPin className="h-8 w-8 text-indigo-400" />
           </div>
@@ -43,8 +43,8 @@ export default function HomePage() {
           <p className="text-slate-400 text-sm">
             Pinpoint the exact location of the issue on the map. Our system automatically groups issues in the same area.
           </p>
-        </div>
-        <div className="glass-card p-8 text-center flex flex-col items-center">
+        </Link>
+        <Link to="/submit" className="glass-card p-8 text-center flex flex-col items-center hover:bg-white/5 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
           <div className="rounded-full bg-cyan-500/20 p-4 mb-4">
             <ShieldCheck className="h-8 w-8 text-cyan-400" />
           </div>
@@ -52,8 +52,8 @@ export default function HomePage() {
           <p className="text-slate-400 text-sm">
             Our AI engine instantly categorizes complaints and predicts urgency, eliminating manual routing delays.
           </p>
-        </div>
-        <div className="glass-card p-8 text-center flex flex-col items-center">
+        </Link>
+        <Link to="/admin" className="glass-card p-8 text-center flex flex-col items-center hover:bg-white/5 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
           <div className="rounded-full bg-purple-500/20 p-4 mb-4">
             <BarChart3 className="h-8 w-8 text-purple-400" />
           </div>
@@ -61,7 +61,7 @@ export default function HomePage() {
           <p className="text-slate-400 text-sm">
             City administrators get a bird's-eye view of all complaints, spotting trends and allocating resources effectively.
           </p>
-        </div>
+        </Link>
       </section>
     </div>
   );

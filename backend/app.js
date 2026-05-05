@@ -8,6 +8,7 @@ const authRoutes = require("./src/routes/authRoutes");
 const complaintRoutes = require("./src/routes/complaintRoutes");
 const adminRoutes = require("./src/routes/adminRoutes");
 const departmentRoutes = require("./src/routes/departmentRoutes");
+const chatRoutes = require("./src/routes/chatRoutes");
 const errorHandler = require("./src/middleware/errorHandler");
 
 const app = express();
@@ -29,6 +30,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/complaints", complaintRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/departments", departmentRoutes);
+app.use("/api/chat", chatRoutes);
 app.use(errorHandler);
 app.use("*", (_req, res) =>
   res.status(404).json({ success: false, message: "Route not found" })
