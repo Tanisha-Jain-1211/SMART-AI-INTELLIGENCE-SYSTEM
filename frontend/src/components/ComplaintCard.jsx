@@ -1,14 +1,21 @@
+// Summary card for complaint previews with media, badges, and navigation.
 import { Link } from "react-router-dom";
-import { Clock, MapPin, AlertCircle, Calendar } from "lucide-react";
-import StatusBadge from "./StatusBadge";
+import { MapPin, AlertCircle, Calendar } from "lucide-react";
+
+import CategoryBadge from "./badges/CategoryBadge";
+import StatusBadge from "./badges/StatusBadge";
+import UrgencyBadge from "./badges/UrgencyBadge";
+import { complaintImageUrl } from "../utils/complaintImageUrl";
 
 export default function ComplaintCard({ complaint }) {
+  const img = complaintImageUrl(complaint.imageUrl);
+
   return (
     <div className="glass-card flex flex-col h-full overflow-hidden">
       {complaint.imageUrl ? (
         <div className="h-48 w-full overflow-hidden bg-slate-800">
           <img
-            src={`http://localhost:5000/${complaint.imageUrl.replace('\\', '/')}`}
+            src={img}
             alt={complaint.title}
             className="h-full w-full object-cover transition-transform duration-500 hover:scale-110"
             onError={(e) => {
@@ -24,11 +31,12 @@ export default function ComplaintCard({ complaint }) {
       )}
       
       <div className="p-5 flex flex-col flex-grow">
-        <div className="flex justify-between items-start mb-3">
+        <div className="flex flex-wrap justify-between items-start gap-2 mb-3">
           <StatusBadge status={complaint.status} />
-          <span className="text-xs font-medium text-slate-400 bg-slate-800/80 px-2 py-1 rounded-md">
-            {complaint.category}
-          </span>
+          <div className="flex flex-wrap gap-2">
+            <CategoryBadge category={complaint.category} />
+            <UrgencyBadge urgency={complaint.urgency} />
+          </div>
         </div>
         
         <h3 className="text-lg font-bold text-white mb-2 line-clamp-2">{complaint.title}</h3>

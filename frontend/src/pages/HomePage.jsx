@@ -1,67 +1,119 @@
+// Landing experience with hero messaging, public metrics, and recent activity.
 import { Link } from "react-router-dom";
-import { ShieldCheck, MapPin, BarChart3, ArrowRight } from "lucide-react";
+import { ArrowRight, Sparkles, MapPinned, CheckCircle2 } from "lucide-react";
+
+import ComplaintCard from "../components/ComplaintCard";
+import ErrorMessage from "../components/ui/ErrorMessage";
+import LoadingSpinner from "../components/ui/LoadingSpinner";
+import { usePublicStats } from "../hooks/useAdminStats";
+import { useComplaints } from "../hooks/useComplaints";
 
 export default function HomePage() {
+  const statsQuery = usePublicStats();
+  const recentQuery = useComplaints({ page: 1, limit: 6 });
+
   return (
-    <div className="flex flex-col gap-20 py-10">
-      {/* Hero Section */}
-      <section className="text-center mt-10">
-        <h1 className="text-5xl font-extrabold text-white tracking-tight sm:text-7xl">
-          Smarter City, <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400 text-glow">
-            Better Tomorrow.
-          </span>
-        </h1>
-        <p className="mt-6 mx-auto max-w-2xl text-lg text-slate-300">
-          The Smart Complaint Intelligence System empowers citizens to report issues seamlessly,
-          while AI ensures every complaint is categorized, prioritized, and routed to the right department instantly.
+    <div className="flex flex-col gap-16 py-8">
+      <section className="text-center">
+        <p className="text-sm font-medium uppercase tracking-[0.2em] text-indigo-300">
+          Smart Complaint Intelligence System
         </p>
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-white sm:text-6xl">
+          Report. Track. Resolve.
+        </h1>
+        <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-400">
+          File civic issues in minutes. AI classifies urgency and category while officers route work to
+          the right department — transparently.
+        </p>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
           <Link
             to="/submit"
-            className="flex items-center gap-2 rounded-full bg-indigo-600 px-8 py-4 text-base font-semibold text-white shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:bg-indigo-500 hover:-translate-y-1 transition-all duration-300"
+            className="inline-flex items-center gap-2 rounded-full bg-indigo-600 px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500"
           >
-            Report an Issue
-            <ArrowRight className="h-5 w-5" />
+            Submit a complaint
+            <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
             to="/login"
-            className="rounded-full glass-panel px-8 py-4 text-base font-semibold text-white hover:bg-white/10 transition-all duration-300"
+            className="rounded-full border border-slate-600 px-8 py-3 text-sm font-semibold text-slate-200 hover:border-slate-400"
           >
-            Track My Complaint
+            Sign in to track
           </Link>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="grid md:grid-cols-3 gap-6 mt-10">
-        <Link to="/my-complaints" className="glass-card p-8 text-center flex flex-col items-center hover:bg-white/5 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
-          <div className="rounded-full bg-indigo-500/20 p-4 mb-4">
-            <MapPin className="h-8 w-8 text-indigo-400" />
+      <section>
+        {statsQuery.isLoading ? <LoadingSpinner label="Loading city insights..." /> : null}
+        {statsQuery.isError ? (
+          <ErrorMessage title="Could not load stats" message="Try again after starting the backend API." />
+        ) : null}
+        {statsQuery.data ? (
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="glass-card p-6">
+              <p className="text-sm text-slate-400">Total complaints</p>
+              <p className="mt-2 text-3xl font-bold text-white">{statsQuery.data.total}</p>
+            </div>
+            <div className="glass-card p-6">
+              <p className="text-sm text-slate-400">Resolved today</p>
+              <p className="mt-2 text-3xl font-bold text-emerald-300">{statsQuery.data.resolvedToday}</p>
+            </div>
+            <div className="glass-card p-6">
+              <p className="text-sm text-slate-400">Avg resolution time</p>
+              <p className="mt-2 text-3xl font-bold text-indigo-200">
+                {statsQuery.data.avgResolutionTimeHours}{" "}
+                <span className="text-base font-normal text-slate-500">hrs</span>
+              </p>
+            </div>
           </div>
-          <h3 className="text-xl font-bold text-white mb-2">Location Intelligence</h3>
-          <p className="text-slate-400 text-sm">
-            Pinpoint the exact location of the issue on the map. Our system automatically groups issues in the same area.
-          </p>
-        </Link>
-        <Link to="/submit" className="glass-card p-8 text-center flex flex-col items-center hover:bg-white/5 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
-          <div className="rounded-full bg-cyan-500/20 p-4 mb-4">
-            <ShieldCheck className="h-8 w-8 text-cyan-400" />
+        ) : null}
+      </section>
+
+      <section>
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-white">Recent complaints</h2>
+            <p className="text-sm text-slate-400">Latest submissions visible to all citizens.</p>
           </div>
-          <h3 className="text-xl font-bold text-white mb-2">AI Triage</h3>
-          <p className="text-slate-400 text-sm">
-            Our AI engine instantly categorizes complaints and predicts urgency, eliminating manual routing delays.
-          </p>
-        </Link>
-        <Link to="/admin" className="glass-card p-8 text-center flex flex-col items-center hover:bg-white/5 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
-          <div className="rounded-full bg-purple-500/20 p-4 mb-4">
-            <BarChart3 className="h-8 w-8 text-purple-400" />
+          <Link to="/register" className="text-sm font-semibold text-indigo-400 hover:text-indigo-300">
+            Join to report →
+          </Link>
+        </div>
+        {recentQuery.isLoading ? <LoadingSpinner /> : null}
+        {recentQuery.isError ? <ErrorMessage title="Unable to load complaints" /> : null}
+        {recentQuery.data?.data?.length ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {recentQuery.data.data.map((c) => (
+              <ComplaintCard key={c.id} complaint={c} />
+            ))}
           </div>
-          <h3 className="text-xl font-bold text-white mb-2">Real-time Analytics</h3>
-          <p className="text-slate-400 text-sm">
-            City administrators get a bird's-eye view of all complaints, spotting trends and allocating resources effectively.
+        ) : null}
+        {!recentQuery.isLoading && recentQuery.data?.data?.length === 0 ? (
+          <p className="text-center text-slate-500">No complaints yet — be the first to report.</p>
+        ) : null}
+      </section>
+
+      <section className="grid gap-6 md:grid-cols-3">
+        <div className="glass-panel p-6">
+          <Sparkles className="mb-4 h-8 w-8 text-indigo-400" />
+          <h3 className="text-lg font-semibold text-white">1 · Submit</h3>
+          <p className="mt-2 text-sm text-slate-400">
+            Describe the issue, attach a photo, and drop a map pin so crews know exactly where to go.
           </p>
-        </Link>
+        </div>
+        <div className="glass-panel p-6">
+          <MapPinned className="mb-4 h-8 w-8 text-cyan-400" />
+          <h3 className="text-lg font-semibold text-white">2 · AI classifies</h3>
+          <p className="mt-2 text-sm text-slate-400">
+            Models infer category and urgency, and scan for duplicates so triage stays fast.
+          </p>
+        </div>
+        <div className="glass-panel p-6">
+          <CheckCircle2 className="mb-4 h-8 w-8 text-emerald-400" />
+          <h3 className="text-lg font-semibold text-white">3 · Get resolved</h3>
+          <p className="mt-2 text-sm text-slate-400">
+            Officers update status while you track every milestone until closure.
+          </p>
+        </div>
       </section>
     </div>
   );

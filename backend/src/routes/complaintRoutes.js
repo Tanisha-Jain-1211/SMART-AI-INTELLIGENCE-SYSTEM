@@ -12,6 +12,11 @@ router.post(
   uploadImage,
   complaintController.createComplaint
 );
+router.get(
+  "/mine",
+  protect([ROLES.CITIZEN]),
+  complaintController.getMyComplaints
+);
 router.get("/", complaintController.getComplaints);
 router.get("/:id", complaintController.getComplaintById);
 router.patch(

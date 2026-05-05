@@ -13,6 +13,15 @@ from utils.model_loader import model_loader
 # Load environment variables
 load_dotenv()
 
+ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.getenv(
+        "ALLOWED_ORIGINS",
+        "http://localhost:5000,http://localhost:5173",
+    ).split(",")
+    if o.strip()
+]
+
 # Setup logging
 logging.basicConfig(
     level=getattr(logging, os.getenv("LOG_LEVEL", "INFO")),
@@ -24,7 +33,7 @@ app = FastAPI(title="Smart Complaint ML Engine", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS or ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -72,6 +81,13 @@ async def health_check():
         "service": "ml-service",
         "models_loaded": model_loader.health_check()
     }
+
+@app.get("/models/status")
+async def models_status():
+    """Compatibility alias describing loaded inference stacks."""
+    status = model_loader.health_check()
+    return {"models_loaded": status, "service": "ml-service"}
+
 
 @app.get("/model-stats")
 async def get_model_stats():

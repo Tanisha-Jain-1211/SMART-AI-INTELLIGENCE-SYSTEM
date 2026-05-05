@@ -72,11 +72,15 @@ async function createComplaint(req, res, next) {
       });
     }
 
+    const maxDup = Math.min(
+      Number(process.env.MAX_COMPLAINTS_FOR_DUPLICATE || 100),
+      500
+    );
     const existingComplaints = await prisma.complaint.findMany({
-      where: { category: body.category || "OTHER" },
+      where: { id: { not: complaint.id } },
       select: { id: true, title: true, description: true },
       orderBy: { createdAt: "desc" },
-      take: 100
+      take: maxDup
     });
     
     const formattedExisting = existingComplaints.map(c => ({
@@ -115,6 +119,42 @@ async function createComplaint(req, res, next) {
 /**
  * Returns paginated complaints with optional status/category/urgency filters.
  */
+async function getMyComplaints(req, res, next) {
+  try {
+    const page = Math.max(Number(req.query.page) || 1, 1);
+    const limit = Math.max(Number(req.query.limit) || 20, 1);
+    const skip = (page - 1) * limit;
+
+    const where = { userId: req.user.id };
+    if (req.query.status) where.status = req.query.status;
+    if (req.query.category) where.category = req.query.category;
+    if (req.query.urgency) where.urgency = req.query.urgency;
+
+    const [total, complaints] = await Promise.all([
+      prisma.complaint.count({ where }),
+      prisma.complaint.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" }
+      })
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: complaints,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    return next(error);
+  }
+}
+
 async function getComplaints(req, res, next) {
   try {
     const page = Math.max(Number(req.query.page) || 1, 1);
@@ -132,7 +172,10 @@ async function getComplaints(req, res, next) {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: "desc" }
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: { select: { name: true } }
+        }
       })
     ]);
 
@@ -290,6 +333,7 @@ async function deleteComplaint(req, res, next) {
 
 module.exports = {
   createComplaint,
+  getMyComplaints,
   getComplaints,
   getComplaintById,
   updateComplaintStatus,

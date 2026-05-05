@@ -35,7 +35,10 @@ async function createDepartment(req, res, next) {
 async function getDepartments(_req, res, next) {
   try {
     const departments = await prisma.department.findMany({
-      orderBy: { name: "asc" }
+      orderBy: { name: "asc" },
+      include: {
+        _count: { select: { complaints: true } }
+      }
     });
     return res.status(200).json({
       success: true,

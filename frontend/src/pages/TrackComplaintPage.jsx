@@ -1,164 +1,220 @@
+// Detailed complaint tracker with media, maps, AI insights, and history timeline.
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Loader2, AlertTriangle, Clock, MapPin, CheckCircle, Tag, AlertOctagon } from "lucide-react";
-import api from "../services/api";
-import StatusBadge from "../components/StatusBadge";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import {
+  ArrowLeft,
+  Loader2,
+  AlertTriangle,
+  Clock,
+  MapPin,
+  CheckCircle,
+  Share2
+} from "lucide-react";
+import toast from "react-hot-toast";
+
+import CategoryBadge from "../components/badges/CategoryBadge";
+import StatusBadge from "../components/badges/StatusBadge";
+import UrgencyBadge from "../components/badges/UrgencyBadge";
+import ErrorMessage from "../components/ui/ErrorMessage";
+import { useComplaint } from "../hooks/useComplaints";
+import { complaintImageUrl } from "../utils/complaintImageUrl";
 
 export default function TrackComplaintPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const query = useComplaint(id);
 
-  const { data: complaint, isLoading, isError } = useQuery({
-    queryKey: ["complaint", id],
-    queryFn: async () => {
-      const res = await api.get(`/complaints/${id}`);
-      return res.data.data;
+  const share = async () => {
+    const url = window.location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied");
+    } catch {
+      toast.error("Could not copy link");
     }
-  });
+  };
 
-  if (isLoading) {
+  if (query.isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-indigo-400">
-        <Loader2 className="h-10 w-10 animate-spin mb-4" />
+        <Loader2 className="mb-4 h-10 w-10 animate-spin" />
         <p>Loading complaint details...</p>
       </div>
     );
   }
 
-  if (isError || !complaint) {
+  if (query.isError || !query.data) {
     return (
-      <div className="max-w-2xl mx-auto py-8">
-        <div className="glass-panel p-8 text-center text-red-400">
-          <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-80" />
-          <h3 className="text-lg font-semibold">Complaint Not Found</h3>
-          <p className="text-sm mt-2 opacity-80 mb-6">We couldn't find the requested complaint.</p>
-          <button
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 rounded-lg bg-slate-800 px-4 py-2 font-medium text-white hover:bg-slate-700 transition-colors border border-slate-700"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Go Back
-          </button>
-        </div>
+      <div className="mx-auto max-w-2xl py-8">
+        <ErrorMessage
+          title="Complaint not found"
+          message="We couldn't load this complaint. It may have been removed."
+        />
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="mt-4 inline-flex items-center gap-2 rounded-lg border border-slate-700 px-4 py-2 text-sm text-white"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Go back
+        </button>
       </div>
     );
   }
 
-  return (
-    <div className="max-w-4xl mx-auto py-8">
-      <button
-        onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-6 text-sm font-medium"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to List
-      </button>
+  const complaint = query.data;
+  const imgSrc = complaintImageUrl(complaint.imageUrl);
+  const confidencePct =
+    typeof complaint.aiConfidence === "number" ? Math.round(complaint.aiConfidence * 100) : null;
 
-      <div className="flex flex-col md:flex-row gap-8">
-        {/* Left Column - Details */}
-        <div className="flex-1 space-y-6">
+  return (
+    <div className="mx-auto max-w-5xl py-8">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-white"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </button>
+        <button
+          type="button"
+          onClick={share}
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-700 px-4 py-2 text-sm font-semibold text-white hover:border-indigo-500"
+        >
+          <Share2 className="h-4 w-4" />
+          Share
+        </button>
+      </div>
+
+      <div className="flex flex-col gap-8 lg:flex-row">
+        <div className="min-w-0 flex-1 space-y-6">
           <div className="glass-panel p-6 sm:p-8">
-            <div className="flex justify-between items-start mb-6">
-              <h1 className="text-2xl font-bold text-white leading-tight pr-4">{complaint.title}</h1>
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+              <h1 className="text-2xl font-bold leading-tight text-white">{complaint.title}</h1>
               <StatusBadge status={complaint.status} />
             </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="glass-card p-4 flex flex-col gap-1">
-                <span className="text-xs text-slate-400 flex items-center gap-1.5"><Tag className="h-3 w-3" /> Category</span>
-                <span className="text-sm font-semibold text-slate-200">{complaint.category}</span>
-              </div>
-              <div className="glass-card p-4 flex flex-col gap-1">
-                <span className="text-xs text-slate-400 flex items-center gap-1.5"><AlertOctagon className="h-3 w-3" /> Urgency</span>
-                <span className="text-sm font-semibold text-slate-200">{complaint.urgency}</span>
-              </div>
+            <div className="mb-6 flex flex-wrap gap-2">
+              <CategoryBadge category={complaint.category} />
+              <UrgencyBadge urgency={complaint.urgency} />
             </div>
 
-            {complaint.aiConfidence && complaint.aiCategory && (
-              <div className="mb-6 p-4 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
-                <p className="text-xs text-indigo-300 font-medium mb-1">AI Classification Insight</p>
-                <p className="text-sm text-slate-300">
-                  Our AI engine categorized this issue as <span className="font-semibold text-indigo-400">{complaint.aiCategory}</span> with {Math.round(complaint.aiConfidence * 100)}% confidence.
+            {(complaint.aiCategory || complaint.aiUrgency || confidencePct !== null) && (
+              <div className="mb-6 rounded-xl border border-indigo-500/25 bg-indigo-500/10 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-300">AI insight</p>
+                <p className="mt-2 text-sm text-slate-200">
+                  Model suggests{" "}
+                  <span className="font-semibold text-white">{complaint.aiCategory || complaint.category}</span> ·{" "}
+                  <span className="font-semibold text-white">{complaint.aiUrgency || complaint.urgency}</span>
                 </p>
+                {confidencePct !== null ? (
+                  <div className="mt-3">
+                    <div className="flex justify-between text-xs text-slate-400">
+                      <span>Confidence</span>
+                      <span>{confidencePct}%</span>
+                    </div>
+                    <progress
+                      className="mt-1 h-2 w-full accent-indigo-500"
+                      value={Math.min(100, confidencePct)}
+                      max={100}
+                    />
+                  </div>
+                ) : null}
               </div>
             )}
 
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-semibold text-white mb-2 border-b border-slate-700/50 pb-2">Description</h3>
-                <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{complaint.description}</p>
+                <h3 className="mb-2 border-b border-slate-800 pb-2 text-sm font-semibold text-white">
+                  Description
+                </h3>
+                <p className="text-sm leading-relaxed text-slate-300 whitespace-pre-wrap">
+                  {complaint.description}
+                </p>
               </div>
-
-              {complaint.address && (
+              {complaint.address ? (
                 <div>
-                  <h3 className="text-sm font-semibold text-white mb-2 border-b border-slate-700/50 pb-2 flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-indigo-400" /> Location
+                  <h3 className="mb-2 flex items-center gap-2 border-b border-slate-800 pb-2 text-sm font-semibold text-white">
+                    <MapPin className="h-4 w-4 text-indigo-400" /> Address
                   </h3>
-                  <p className="text-slate-300 text-sm">{complaint.address}</p>
+                  <p className="text-sm text-slate-300">{complaint.address}</p>
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
 
-          {complaint.imageUrl && (
+          {complaint.imageUrl ? (
             <div className="glass-panel overflow-hidden">
-              <div className="p-4 border-b border-slate-700/50">
-                <h3 className="text-sm font-semibold text-white">Attached Evidence</h3>
+              <div className="border-b border-slate-800 p-4">
+                <h3 className="text-sm font-semibold text-white">Evidence</h3>
               </div>
-              <img
-                src={`http://localhost:5000/${complaint.imageUrl.replace('\\', '/')}`}
-                alt="Complaint evidence"
-                className="w-full h-auto object-cover max-h-96"
-              />
+              <img src={imgSrc} alt="Complaint evidence" className="max-h-96 w-full object-cover" />
             </div>
-          )}
+          ) : null}
+
+          {complaint.latitude != null && complaint.longitude != null ? (
+            <div className="glass-panel p-4">
+              <h3 className="mb-3 text-sm font-semibold text-white">Pinned location</h3>
+              <div className="h-56 overflow-hidden rounded-xl border border-slate-800">
+                <MapContainer
+                  center={[complaint.latitude, complaint.longitude]}
+                  zoom={15}
+                  className="h-full w-full"
+                  scrollWheelZoom={false}
+                >
+                  <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+                  <Marker position={[complaint.latitude, complaint.longitude]}>
+                    <Popup>Reported location</Popup>
+                  </Marker>
+                </MapContainer>
+              </div>
+            </div>
+          ) : null}
         </div>
 
-        {/* Right Column - Timeline */}
-        <div className="md:w-80 lg:w-96">
-          <div className="glass-panel p-6 sticky top-24">
-            <h3 className="text-lg font-semibold text-white mb-6 border-b border-slate-700/50 pb-4">Status Timeline</h3>
-            
-            <div className="relative border-l border-slate-700/50 ml-4 space-y-8">
+        <div className="w-full lg:w-96">
+          <div className="glass-panel sticky top-24 p-6">
+            <h3 className="mb-6 border-b border-slate-800 pb-4 text-lg font-semibold text-white">
+              Status timeline
+            </h3>
+            <div className="relative ml-4 space-y-8 border-l border-slate-800 pl-6">
               {complaint.statusHistory?.map((history, index) => {
                 const isLatest = index === 0;
-                
                 return (
-                  <div key={history.id} className="relative pl-6">
-                    {/* Timeline dot */}
-                    <div className={`absolute -left-1.5 top-1.5 h-3 w-3 rounded-full border-2 border-slate-900 ${
-                      isLatest ? "bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" : "bg-slate-500"
-                    }`} />
-                    
+                  <div key={history.id} className="relative">
+                    <div
+                      className={`absolute -left-[29px] top-1.5 h-3 w-3 rounded-full border-2 border-slate-950 ${
+                        isLatest ? "bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" : "bg-slate-500"
+                      }`}
+                    />
                     <div className="flex flex-col gap-1">
-                      <span className={`text-sm font-bold ${isLatest ? "text-indigo-400" : "text-slate-300"}`}>
-                        {history.status.replace("_", " ")}
+                      <span className={`text-sm font-bold ${isLatest ? "text-indigo-300" : "text-slate-300"}`}>
+                        {history.status.replace(/_/g, " ")}
                       </span>
-                      <span className="text-xs text-slate-500 flex items-center gap-1.5">
+                      <span className="flex items-center gap-1 text-xs text-slate-500">
                         <Clock className="h-3 w-3" />
                         {new Date(history.changedAt).toLocaleString()}
                       </span>
-                      {history.note && (
-                        <div className="mt-2 text-sm text-slate-400 bg-slate-800/50 p-3 rounded-md border border-slate-700/50">
+                      {history.note ? (
+                        <div className="mt-2 rounded-md border border-slate-800 bg-slate-900/60 p-3 text-sm text-slate-400">
                           {history.note}
                         </div>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 );
               })}
-
-              {/* Initial submission entry */}
-              <div className="relative pl-6">
-                <div className="absolute -left-1.5 top-1.5 h-3 w-3 rounded-full border-2 border-slate-900 bg-emerald-500" />
+              <div className="relative">
+                <div className="absolute -left-[29px] top-1.5 h-3 w-3 rounded-full border-2 border-slate-950 bg-emerald-500" />
                 <div className="flex flex-col gap-1">
-                  <span className="text-sm font-bold text-slate-300">SUBMITTED</span>
-                  <span className="text-xs text-slate-500 flex items-center gap-1.5">
+                  <span className="text-sm font-bold text-slate-300">Submitted</span>
+                  <span className="flex items-center gap-1 text-xs text-slate-500">
                     <CheckCircle className="h-3 w-3" />
                     {new Date(complaint.createdAt).toLocaleString()}
                   </span>
-                  <div className="mt-2 text-sm text-slate-400 bg-slate-800/50 p-3 rounded-md border border-slate-700/50">
-                    Complaint received by system
+                  <div className="mt-2 rounded-md border border-slate-800 bg-slate-900/60 p-3 text-sm text-slate-400">
+                    Received from citizen portal
                   </div>
                 </div>
               </div>

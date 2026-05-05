@@ -8,6 +8,7 @@ const authRoutes = require("./src/routes/authRoutes");
 const complaintRoutes = require("./src/routes/complaintRoutes");
 const adminRoutes = require("./src/routes/adminRoutes");
 const departmentRoutes = require("./src/routes/departmentRoutes");
+const publicRoutes = require("./src/routes/publicRoutes");
 const chatRoutes = require("./src/routes/chatRoutes");
 const errorHandler = require("./src/middleware/errorHandler");
 
@@ -27,6 +28,7 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/public", publicRoutes);
 app.use("/api/complaints", complaintRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/departments", departmentRoutes);
