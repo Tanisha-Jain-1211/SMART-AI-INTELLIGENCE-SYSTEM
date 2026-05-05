@@ -1,5 +1,5 @@
 <!-- Introduces the project, stack, and local setup instructions for all services. -->
-# Smart Complaint Intelligence System
+# Smart AI Complaint Intelligence System
 
 Smart Complaint Intelligence System is a full-stack platform where citizens submit civic complaints and AI assists with category prediction, urgency scoring, and duplicate detection for faster resolution.
 
