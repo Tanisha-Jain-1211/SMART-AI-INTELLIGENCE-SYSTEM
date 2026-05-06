@@ -13,15 +13,12 @@ Smart Complaint Intelligence System is a full-stack platform where citizens subm
 ### 1) Backend API (`backend`)
 ```bash
 cd backend
-npm install
-copy .env.example .env
 npm run dev
 ```
 
 ### 2) Frontend (`frontend`)
 ```bash
 cd frontend
-npm install
 npm run dev
 ```
 
