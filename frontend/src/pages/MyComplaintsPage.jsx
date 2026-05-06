@@ -10,6 +10,35 @@ import EmptyState from "../components/ui/EmptyState";
 import ErrorMessage from "../components/ui/ErrorMessage";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import { useMyComplaints } from "../hooks/useComplaints";
+import { getProgressPercent } from "../utils/complaintProgress";
+
+function RowProgress({ status }) {
+  try {
+    const progress = getProgressPercent(status);
+    const pct = progress.variant === "rejected" ? 100 : progress.percent;
+    const fillClass =
+      progress.variant === "rejected"
+        ? "bg-red-600"
+        : "bg-gradient-to-r from-indigo-600 to-emerald-500";
+
+    return (
+      <div className="mt-2 flex min-w-[140px] flex-col gap-1">
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ease-out ${fillClass}`}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <span className="text-[10px] font-semibold text-slate-500">
+          {progress.variant === "rejected" ? "Rejected" : `${progress.percent}%`}
+        </span>
+      </div>
+    );
+  } catch (err) {
+    console.log("[MyComplaintsPage] RowProgress", err);
+    return null;
+  }
+}
 
 const STATUSES = ["", "PENDING", "UNDER_REVIEW", "IN_PROGRESS", "RESOLVED", "REJECTED"];
 
@@ -78,7 +107,7 @@ export default function MyComplaintsPage() {
                 <tr>
                   <th className="px-4 py-3">Title</th>
                   <th className="px-4 py-3">Category</th>
-                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3 min-w-[160px]">Status / Progress</th>
                   <th className="px-4 py-3">Urgency</th>
                   <th className="px-4 py-3">Date</th>
                   <th className="px-4 py-3 text-right">Actions</th>
@@ -95,8 +124,16 @@ export default function MyComplaintsPage() {
                     <td className="px-4 py-3">
                       <CategoryBadge category={row.category} />
                     </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={row.status} />
+                    <td className="px-4 py-3 align-top">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                        <StatusBadge status={row.status} />
+                        <span className="text-xs font-bold text-indigo-300 sm:ml-1">
+                          {row.status === "REJECTED"
+                            ? "100% (Rejected)"
+                            : `${getProgressPercent(row.status).percent}%`}
+                        </span>
+                      </div>
+                      <RowProgress status={row.status} />
                     </td>
                     <td className="px-4 py-3">
                       <UrgencyBadge urgency={row.urgency} />

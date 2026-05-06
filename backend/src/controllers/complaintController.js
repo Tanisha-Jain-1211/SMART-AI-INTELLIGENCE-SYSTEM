@@ -2,6 +2,7 @@
 const { z } = require("zod");
 const prisma = require("../utils/prismaClient");
 const { classifyComplaint, checkDuplicate } = require("../services/mlService");
+const emailService = require("../utils/emailService");
 
 const complaintCreateSchema = z.object({
   title: z.string().min(10),
@@ -253,15 +254,52 @@ async function updateComplaintStatus(req, res, next) {
       where: { id: complaintId },
       include: {
         statusHistory: {
-          orderBy: { changedAt: "desc" },
-          take: 1
+          orderBy: { changedAt: "desc" }
+        },
+        user: {
+          select: { name: true, email: true }
         }
       }
     });
 
+    if (!updatedComplaint) {
+      return res.status(404).json({
+        success: false,
+        message: "Not found"
+      });
+    }
+
+    const citizen = updatedComplaint.user;
+    const { user: _omitUser, ...complaintPayload } = updatedComplaint;
+
+    if (citizen?.email) {
+      Promise.resolve()
+        .then(async () => {
+          try {
+            await emailService.sendStatusUpdate({
+              to: citizen.email,
+              citizenName: citizen.name,
+              complaint: {
+                id: complaintPayload.id,
+                title: complaintPayload.title,
+                createdAt: complaintPayload.createdAt
+              },
+              newStatus: body.status,
+              note: body.note,
+              statusHistory: complaintPayload.statusHistory
+            });
+          } catch (emailErr) {
+            console.log("[complaintController] updateComplaintStatus email", emailErr);
+          }
+        })
+        .catch((err) => {
+          console.log("[complaintController] updateComplaintStatus email chain", err);
+        });
+    }
+
     return res.status(200).json({
       success: true,
-      data: updatedComplaint
+      data: complaintPayload
     });
   } catch (error) {
     return next(error);

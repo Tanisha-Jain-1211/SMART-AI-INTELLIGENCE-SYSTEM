@@ -23,6 +23,7 @@
     "morgan": "^1.10.0",
     "multer": "^2.1.1",
     "multer-storage-cloudinary": "^4.0.0",
+    "nodemailer": "^8.0.7",
     "openai": "^6.36.0",
     "zod": "^4.3.6"
   },
